@@ -86,12 +86,17 @@ const isKesselEnabled = useFlag('platform.chrome.kessel');
 // Sources permissions: Always use v1 Chrome API (all orgs)
 dispatch(loadWritePermissions(getUserPermissions));
 
-// Integrations permissions: Use v2 for v2 orgs, v1 for v1 orgs
+// Integrations permissions: Use v2 for Kessel-enabled envs, v1 otherwise
 if (isKesselEnabled && !isKesselLoading) {
-  // v2 org: Load integrations from Kessel
+  // Kessel enabled: Load integrations from Kessel
   dispatch(loadPermissionsFromKessel(kesselPermissions));
+  // Also load v1 permissions for wildcard fallback — Kessel v2 does not
+  // support wildcard expansion, so Org Admins and legacy roles with
+  // permissions like integrations:*:* need the v1 check as well.
+  dispatch(loadIntegrationsEndpointsPermissions(getUserPermissions));
+  dispatch(loadIntegrationsReadPermissions(getUserPermissions));
 } else if (!isKesselEnabled) {
-  // v1 org: Load integrations from Chrome API
+  // v1 only: Load integrations from Chrome API
   dispatch(loadIntegrationsEndpointsPermissions(getUserPermissions));
   dispatch(loadIntegrationsReadPermissions(getUserPermissions));
 }
